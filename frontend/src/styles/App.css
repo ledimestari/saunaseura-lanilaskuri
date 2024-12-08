@@ -1,0 +1,40 @@
+#root {
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  font-family: "Courier New", monospace;
+  background-color: #202020;
+}
+
+.MainBlock {
+  display: flex;
+  flex-direction: column;
+  width: 1280px;
+  height: 600px;
+  margin: 0 auto;
+  box-shadow: 0 4px 8px rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  background-color: #111111;
+}
+
+.TopBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-left: 20px;
+  padding-right: 20px;
+  height: 10%;
+  width: 100%;
+  border-radius: 8px 8px 0px 0px;
+  box-sizing: border-box;
+  color: white;
+}
+
+.BottomHalf {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex: 1;
+  color: white;
+}

@@ -1,0 +1,104 @@
+.MainPage-MainBlock {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  justify-content: center;
+  flex-direction: row;
+  gap: 20px;
+}
+
+.MainPage-PasswordBlock {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  justify-content: center;
+  flex-direction: row;
+}
+
+.PasswordBlock {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: row;
+  width: 500px;
+  gap: 10px;
+}
+
+.InnerBlock-Left {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  flex-direction: column;
+  padding: 4px;
+  height: 400px;
+  width: 45%;
+}
+
+.InnerBlock-Left #title {
+  height: 10%;
+}
+
+.InnerBlock-Left #content {
+  height: 90%;
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  flex-direction: column;
+}
+
+.InnerBlock-Right {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  flex-direction: column;
+  padding: 4px;
+  height: 400px;
+  width: 45%;
+}
+
+.InnerBlock-Right #title {
+  height: 10%;
+}
+
+.InnerBlock-Right #content {
+  height: 90%;
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  flex-direction: column;
+  gap: 4px;
+  overflow-y: auto;
+}
+
+.InnerBlock-Right #content-loading {
+  display: flex;
+  flex: 1;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+}
+
+/* Custom scrollbar styles */
+.InnerBlock-Right #content::-webkit-scrollbar {
+  width: 2px;
+}
+
+.InnerBlock-Right #content::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+.InnerBlock-Right #content::-webkit-scrollbar-thumb {
+  background: #888;
+}
+
+.InnerBlock-Right #content::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}
+
+/* Custom scrollbar styles end */
+
+.InnerBlock-Middle {
+  height: 400px;
+  width: 2px;
+  background-color: white;
+}

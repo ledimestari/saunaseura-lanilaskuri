@@ -1,0 +1,24 @@
+.ButtonStyle {
+  background-color: white;
+  color: black;
+  padding: 10px 20px;
+  margin-right: 10px;
+  border: none;
+  cursor: pointer;
+}
+
+.LoadingSpinner {
+  height: 70px;
+  width: 70px;
+  border-radius: 50%;
+  animation: spin 2s linear infinite;
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
