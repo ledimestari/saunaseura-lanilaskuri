@@ -7,9 +7,9 @@ function App() {
     <>
       <div className="MainBlock">
         <div className="TopBar">
-          <p>[dev]</p>
-          <p>lanilaskuri</p>
-          <p>[dev]</p>
+          <div className="TopBarTitleLeft">[ver. 1.0]</div>
+          <div className="TopBarTitleCenter">lanilaskuri</div>
+          <div className="TopBarTitleRight">[dev]</div>
         </div>
         <div className="BottomHalf">
           <MainPage></MainPage>

@@ -31,6 +31,24 @@
   color: white;
 }
 
+.TopBarTitleLeft {
+  display: flex;
+  flex: 1;
+  justify-content: flex-start;
+}
+
+.TopBarTitleCenter {
+  display: flex;
+  flex: 1;
+  justify-content: center;
+}
+
+.TopBarTitleRight {
+  display: flex;
+  flex: 1;
+  justify-content: flex-end;
+}
+
 .BottomHalf {
   display: flex;
   justify-content: center;
