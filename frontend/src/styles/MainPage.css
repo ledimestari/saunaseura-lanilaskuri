@@ -66,6 +66,7 @@
   justify-content: flex-start;
   align-items: center;
   flex-direction: column;
+  text-align: center;
   gap: 4px;
   overflow-y: auto;
 }
@@ -73,7 +74,7 @@
 .InnerBlock-Right #content-loading {
   display: flex;
   flex: 1;
-  justify-content: center;
+  justify-content: flex-start;
   align-items: center;
   flex-direction: column;
 }

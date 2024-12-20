@@ -1,33 +1,137 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import LoadingSpinner from "../components/loading-spinner";
 import "./../styles/MainPage.css";
 import "./../styles/Components.css";
+import {
+  authCheck,
+  healthCheck,
+  getEvents,
+  createEvent,
+} from "../helpers/queryServices";
 
-const mockupContent = [
-  "LAN-pelitapahtuma",
-  "Verkkopeliturnaus",
-  "Moninpelitapahtuma",
-  "Pelaajien kokoontuminen",
-  "Pelimaraton",
-  "Yhteisöllinen pelitapahtuma",
-];
+import Box from "@mui/material/Box";
+import Modal from "@mui/material/Modal";
+
+const modalStyle = {
+  fontFamily: "'Courier New', monospace",
+  position: "absolute",
+  top: "50%",
+  left: "50%",
+  transform: "translate(-50%, -50%)",
+  width: 200,
+  bgcolor: "#111111",
+  boxShadow: "0 4px 8px rgba(255, 255, 255, 0.1)",
+  borderRadius: 1,
+  p: 4,
+  color: "white",
+  gap: 20,
+};
+
+const formStyle = {
+  color: "white",
+  backgroundColor: "transparent",
+  borderBottom: "2px solid white",
+  outline: "none",
+  marginBottom: "20px",
+  height: "30px",
+  width: "200px",
+};
 
 const MainPage = () => {
   const [loading, setLoading] = useState(false);
   const [password, setPassword] = useState("");
   const [wrongPassword, setWrongPassword] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [events, setEvents] = useState([]);
 
+  const [modalOpen, setModalOpen] = React.useState(false);
+  const [eventName, setEventName] = useState("");
+  const [eventDesc, setEventDesc] = useState("");
+  const handleModalOpen = () => setModalOpen(true);
+  const handleModalClose = () => setModalOpen(false);
+
+  // Check if user is authenticated on page load
+  useEffect(() => {
+    const storedAuth = localStorage.getItem("isAuthenticated");
+    if (storedAuth) {
+      setIsAuthenticated(true);
+      handleEventLoading();
+    }
+  }, []);
+
+  // TODO: Implement logout button on page
+  const handleLogout = () => {
+    setIsAuthenticated(false);
+    localStorage.removeItem("isAuthenticated");
+    setPassword("");
+  };
+
+  // Function to load events from the backend
+  const handleEventLoading = async () => {
+    setLoading(true);
+    try {
+      const response = await getEvents();
+      console.log("events:", response);
+      setEvents(response);
+    } catch (error) {
+      console.error("Error fetching events:", error);
+      setEvents([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Function to create an event
+  const handleEventCreation = async () => {
+    setLoading(true);
+    try {
+      const response = await createEvent(eventName, eventDesc);
+      console.log(response);
+      setEventName("");
+      setEventDesc("");
+    } catch (error) {
+      console.error("Error setting events:", error);
+    } finally {
+      handleEventLoading();
+      handleModalClose();
+      setLoading(false);
+    }
+  };
+
+  // Update characters to password variable when user is typing
   const handlePasswordChange = (e) => {
     setPassword(e.target.value);
   };
 
-  const handleSubmit = (e) => {
+  // Update characters to eventName variable when user is typing
+  const handleEventName = (e) => {
+    setEventName(e.target.value);
+  };
+
+  // Update characters to eventDesc variable when user is typing
+  const handleEventDesc = (e) => {
+    setEventDesc(e.target.value);
+  };
+
+  // Handle password checking and download events when correct
+  const handleAuthCheck = async (e) => {
     e.preventDefault();
-    if (password === "test") {
-      setIsAuthenticated(true);
-    } else {
-      setWrongPassword(true);
+    setLoading(true);
+    try {
+      const response = await authCheck(password);
+      if (response.status === "ok") {
+        setIsAuthenticated(true);
+        localStorage.setItem("isAuthenticated", "true");
+        handleEventLoading();
+      } else {
+        setWrongPassword(true);
+      }
+    } catch (err) {
+      if (err.response && err.response.status === 403) {
+        setWrongPassword(true);
+      }
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -36,7 +140,7 @@ const MainPage = () => {
       {!isAuthenticated ? (
         <div className="MainPage-PasswordBlock">
           <div className="PasswordBlock">
-            <form onSubmit={handleSubmit}>
+            <form onSubmit={handleAuthCheck}>
               <input
                 type="password"
                 placeholder="Salasana"
@@ -55,7 +159,7 @@ const MainPage = () => {
                 }}
               />
             </form>
-            <button onClick={handleSubmit} className="ButtonStyle">
+            <button onClick={handleAuthCheck} className="ButtonStyle">
               Kirjaudu
             </button>
           </div>
@@ -63,15 +167,51 @@ const MainPage = () => {
       ) : (
         <div className="MainPage-MainBlock">
           <div className="InnerBlock-Left">
-            <p id="title">Luo uusi laskuri</p>
+            <p id="title">Luo uusi laskuri:</p>
             <div id="content">
-              {" "}
-              <button className="ButtonStyle">Uusi laskuri</button>
+              <button onClick={handleModalOpen} className="ButtonStyle">
+                Uusi laskuri
+              </button>
             </div>
+            <Modal
+              open={modalOpen}
+              onClose={handleModalClose}
+              aria-labelledby="modal-modal-title"
+              aria-describedby="modal-modal-description"
+            >
+              <Box sx={modalStyle}>
+                <p>Laskurin nimi:</p>
+                <form>
+                  <input
+                    type="text"
+                    placeholder="Nimi"
+                    value={eventName}
+                    onChange={handleEventName}
+                    style={formStyle}
+                  />
+                </form>
+                <p>Laskurin kuvaus:</p>
+                <form onSubmit={null}>
+                  <input
+                    type="text"
+                    placeholder="Kuvaus"
+                    value={eventDesc}
+                    onChange={handleEventDesc}
+                    style={formStyle}
+                  />
+                </form>
+                <button onClick={handleEventCreation} className="ButtonStyle">
+                  Luo
+                </button>
+                <button onClick={handleModalClose} className="ButtonStyle">
+                  Sulje
+                </button>
+              </Box>
+            </Modal>
           </div>
           <div className="InnerBlock-Middle"></div>
           <div className="InnerBlock-Right">
-            <p id="title">Valitse olemassa oleva laskuri</p>
+            <p id="title">Valitse olemassa oleva laskuri:</p>
             {loading ? (
               <div id={loading ? "content-loading" : "content"}>
                 <p>Lataa laskureita...</p>
@@ -80,11 +220,18 @@ const MainPage = () => {
             ) : (
               <>
                 <div id="content">
-                  {mockupContent.map((date, index) => (
-                    <button key={index} className="ButtonStyle">
-                      {date}
-                    </button>
-                  ))}
+                  {events.length === 0 ? (
+                    <p>
+                      Ei olemassa olevia laskureita. Luo uusi laskuri
+                      vasemmalta.
+                    </p>
+                  ) : (
+                    events.map((item, index) => (
+                      <button key={index} className="ButtonStyle">
+                        {item.event_name}
+                      </button>
+                    ))
+                  )}
                 </div>
               </>
             )}
