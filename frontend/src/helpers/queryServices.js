@@ -127,3 +127,62 @@ export const createGood = async (event, goodName, goodPrice, payers) => {
     throw error;
   }
 };
+
+// Delete a good from an event
+export const deleteItem = async (event, id) => {
+  try {
+    const response = await api.delete(
+      `http://192.168.1.180:8000/remove_item_from_event/?event=${event}&id=${id}`,
+      {
+        headers: {
+          Authorization: `Bearer ${apiKey}`,
+          accept: "application/json",
+          "Content-Type": "application/json",
+        },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error(
+      "Error deleting item:",
+      error.response?.data || error.message
+    );
+    throw error;
+  }
+};
+
+// Update a good in an event
+export const updateItemInEvent = async (
+  event,
+  itemId,
+  newItem,
+  newPrice,
+  newPayers
+) => {
+  try {
+    const response = await axios.put(
+      `http://192.168.1.180:8000/update_item_in_event/`,
+      newPayers,
+      {
+        params: {
+          event: event,
+          item_id: itemId,
+          new_item: newItem,
+          new_price: newPrice,
+        },
+        headers: {
+          Authorization: `Bearer fbce26ff-2fbf-436d-9175-8ebf4f7f962b`,
+          accept: "application/json",
+          "Content-Type": "application/json",
+        },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error(
+      "Error updating item in event:",
+      error.response?.data || error.message
+    );
+    throw error;
+  }
+};

@@ -3,7 +3,14 @@ import "./../styles/Components.css";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteForeverIcon from "@mui/icons-material/DeleteForever";
 
-const GoodsRow = ({ item, price, payers }) => {
+const GoodsRow = ({
+  item,
+  price,
+  payers,
+  id,
+  onDeleteFunction,
+  onEditFunction,
+}) => {
   return (
     <div className="Goods-Row">
       <div className="Goods-Cell">{item}</div>
@@ -13,14 +20,14 @@ const GoodsRow = ({ item, price, payers }) => {
         <EditIcon
           className="hoverable-icon"
           onClick={() => {
-            console.log("onClick");
+            onEditFunction(item, price, payers, id);
           }}
         />
         <DeleteForeverIcon
           color="error"
           className="hoverable-icon"
           onClick={() => {
-            console.log("onClick");
+            onDeleteFunction(id);
           }}
         />
       </div>

@@ -1,7 +1,12 @@
 import React, { useEffect, useState } from "react";
 import "./../styles/EventPage.css";
 import "./../styles/Components.css";
-import { getEventGoods, createGood } from "../helpers/queryServices";
+import {
+  getEventGoods,
+  createGood,
+  deleteItem,
+  updateItemInEvent,
+} from "../helpers/queryServices";
 import GoodsRow from "../components/goodsItem";
 import AddIcon from "@mui/icons-material/Add";
 import Box from "@mui/material/Box";
@@ -17,7 +22,7 @@ const modalStyle = {
   top: "50%",
   left: "50%",
   transform: "translate(-50%, -50%)",
-  width: 200,
+  width: 220,
   bgcolor: "#111111",
   boxShadow: "0 4px 8px rgba(255, 255, 255, 0.1)",
   borderRadius: 1,
@@ -34,12 +39,25 @@ const EventPage = ({ eventTitle, onBack }) => {
   const [goodsPrice, setGoodsPrice] = useState("");
   const [payerForm, setPayerForm] = useState("");
   const [existingPayers, setExistingPayers] = useState([]);
+  const [payerParts, setPayerParts] = useState({});
+  const [totalAmount, setTotalAmount] = useState("");
 
+  const [rowEditing, setRowEditing] = useState(false);
+  const [rowItemId, setRowItemId] = useState("");
+
+  // Call fetchEventGoods when the component mounts
   useEffect(() => {
     if (eventTitle) {
       fetchEventGoods();
     }
   }, [eventTitle]);
+
+  // Call calculatePayersParts when goods or payers change
+  useEffect(() => {
+    if (goods.length > 0 && payers.length > 0) {
+      calculatePayersParts();
+    }
+  }, [goods, payers]); // Recalculate whenever goods or payers state changes
 
   // Fetch goods in an event and parse all payers in the items for easier use when adding more goods
   const fetchEventGoods = async () => {
@@ -68,7 +86,12 @@ const EventPage = ({ eventTitle, onBack }) => {
 
   // Close modal
   // TODO: Empty all forms when closing modal
-  const handleAddModalClose = () => setAddModalOpen(false);
+  const handleAddModalClose = () => {
+    setGoodsName("");
+    setGoodsPrice("");
+    setRowEditing(false);
+    setAddModalOpen(false);
+  };
 
   // Handle checkbox change
   const handleCheckBoxChange = (e) => {
@@ -97,7 +120,6 @@ const EventPage = ({ eventTitle, onBack }) => {
 
   // Create item and send to db
   // TODO: Add notifying of errors (maybe a general error text at top?)
-
   const handleItemCreation = async () => {
     const payers = [];
     Object.keys(existingPayers).forEach((payer) => {
@@ -115,6 +137,65 @@ const EventPage = ({ eventTitle, onBack }) => {
       }
     } else {
       console.log("Please fill in all the fields.");
+    }
+  };
+
+  // Calculate each payers part of the final price
+  const calculatePayersParts = async () => {
+    // Initialize all payers
+    const finalPayers = {};
+    payers.forEach((payer) => {
+      finalPayers[payer] = 0;
+    });
+
+    // Log total amount to display
+    let totalAmount = 0;
+
+    // Go through all goods and divide the price by the number of payers for each item
+    goods.forEach((item) => {
+      totalAmount += item.price;
+      const dividedValue = item.price / item.payers.length;
+      item.payers.forEach((payer) => {
+        if (finalPayers[payer] !== undefined) {
+          finalPayers[payer] += dividedValue;
+        }
+      });
+    });
+
+    console.log(finalPayers);
+    setPayerParts(finalPayers);
+    setTotalAmount(totalAmount);
+  };
+
+  // Handle item deletion
+  const handleDeleteItem = async (id) => {
+    try {
+      await deleteItem(eventTitle, id);
+      fetchEventGoods();
+    } catch (error) {
+      console.log("Error deleting an item:", error);
+    }
+  };
+
+  // Handle item deletion
+  const handleRowEditing = async () => {
+    const payers = [];
+    Object.keys(existingPayers).forEach((payer) => {
+      if (existingPayers[payer]) {
+        payers.push(payer);
+      }
+    });
+    try {
+      await updateItemInEvent(
+        eventTitle,
+        rowItemId,
+        goodsName,
+        goodsPrice,
+        payers
+      );
+      fetchEventGoods();
+    } catch (error) {
+      console.log("Error updating item:", error);
     }
   };
 
@@ -159,9 +240,9 @@ const EventPage = ({ eventTitle, onBack }) => {
             <p>Lisää maksaja:</p>
             <form
               onSubmit={(e) => {
-                e.preventDefault(); // Prevent form submission (default behavior)
-                addPayer(payerForm); // Call your function to add the payer
-                setPayerForm(""); // Optionally clear the input after submission
+                e.preventDefault();
+                addPayer(payerForm);
+                setPayerForm("");
               }}
             >
               <input
@@ -201,10 +282,10 @@ const EventPage = ({ eventTitle, onBack }) => {
 
             <button
               disabled={Object.keys(existingPayers).length === 0}
-              onClick={handleItemCreation}
+              onClick={rowEditing ? handleRowEditing : handleItemCreation}
               className={"ButtonStyle"}
             >
-              Luo
+              {rowEditing ? "Muokkaa" : "Lisää"}
             </button>
             <button onClick={handleAddModalClose} className="ButtonStyle">
               Sulje
@@ -218,9 +299,18 @@ const EventPage = ({ eventTitle, onBack }) => {
           goods.map((good, index) => (
             <GoodsRow
               key={index}
+              id={good.id}
               item={good.item}
               price={good.price}
               payers={good.payers}
+              onDeleteFunction={handleDeleteItem}
+              onEditFunction={() => {
+                setGoodsName(good.item);
+                setGoodsPrice(good.price);
+                setRowItemId(good.id);
+                setRowEditing(true);
+                handleAddModalOpen();
+              }}
             />
           ))
         ) : (
@@ -230,8 +320,17 @@ const EventPage = ({ eventTitle, onBack }) => {
 
       <div className="Mainblock-Lower">
         <div id="left">Maksettavat:</div>
-        <div id="center">-</div>
-        <div id="right">yht: 0€</div>
+        <div id="center">
+          {Object.entries(payerParts).map(([payer, amount]) => (
+            <div id="center-inner">
+              <>
+                <div>{payer}</div>
+                <div>€{amount.toFixed(2)}</div>
+              </>
+            </div>
+          ))}
+        </div>
+        <div id="right">yht: {totalAmount}€</div>
       </div>
     </div>
   );
