@@ -9,6 +9,7 @@ from bson import ObjectId
 from dotenv import load_dotenv
 from typing import List
 from pydantic import BaseModel
+import uuid
 
 # Setup env variables for api key
 load_dotenv()
@@ -44,12 +45,15 @@ DATABASE_NAME = "saunaseura-lanilaskuri"
 client = AsyncIOMotorClient(MONGO_URI)
 db = client[DATABASE_NAME]
 
+
 class EventCreateRequest(BaseModel):
     event_name: str
     description: str
 
+
 def api_key_header(authorization: HTTPAuthorizationCredentials = Depends(HTTPBearer())):
     return authorization.credentials
+
 
 # Verify API Key
 async def verify_api_key(authorization: HTTPAuthorizationCredentials = Depends(HTTPBearer())):
@@ -58,11 +62,13 @@ async def verify_api_key(authorization: HTTPAuthorizationCredentials = Depends(H
         raise HTTPException(status_code=403, detail="Unauthorized: Invalid API Key")
     return api_key
 
+
 # Verify password
 async def verify_password(password: str):
     if password != SITE_PASSWORD:
         raise HTTPException(status_code=403, detail="Unauthorized: Invalid password")
     return password
+
 
 # Health check endpoint
 @app.get("/health")
@@ -80,7 +86,10 @@ async def health_check(request: Request, api_key: str = Depends(verify_api_key))
 async def check_password(request: Request, password: str, api_key: str = Depends(verify_api_key), verified_password: str = Depends(verify_password)):
     return {"status": "ok", "message": "Password and API key verified successfully"}
 
+
 # Create an event
+# TODO: Add handling of duplicate naming
+# TODO: Add handling of too long descriptions
 @app.post("/create_event/")
 @limiter.limit("10/minute")
 async def create_event(event_data: EventCreateRequest, request: Request, api_key: str = Depends(verify_api_key)):
@@ -91,23 +100,98 @@ async def create_event(event_data: EventCreateRequest, request: Request, api_key
         return {"id": str(result.inserted_id)}
     raise HTTPException(status_code=500, detail="Failed to add event")
 
+
 # Add item to event
 @app.post("/add_item_to_event/")
 async def add_item_to_event(event: str, item: str, price: float, payers: List[str], request: Request, api_key: str = Depends(verify_api_key)):
-    collection = db["items"]
-    new_item = {"event": event, "item": item, "price": price, "payers": payers}
-    result = await collection.insert_one(new_item)
-    if result.inserted_id:
-        return {"id": str(result.inserted_id)}
+    collection = db["events"]
+    event_document = await collection.find_one({"event_name": event})
+    if not event_document:
+        raise HTTPException(status_code=404, detail="Event not found")
+    new_item = {"item": item, "price": price, "payers": payers, "id": str(uuid.uuid4())}
+    update_result = await collection.update_one(
+        {"event_name": event},
+        {"$push": {"goods": new_item}}
+    )
+    if update_result.modified_count > 0:
+        return {"status": "success", "message": "Item added to event successfully"}
     raise HTTPException(status_code=500, detail="Failed to add item")
 
-# Get events
+
+# Get event names and IDs
 @app.get("/get_events/")
 async def get_events(request: Request, api_key: str = Depends(verify_api_key)):
     collection = db["events"]
     items = await collection.find().to_list(100)
     events = []
     for item in items:
-        item["_id"] = str(item["_id"])
-        events.append(item)
+        events.append({
+            "id": str(item["_id"]),
+            "event_name": item["event_name"]
+        })
     return events
+
+
+# Get goods in events
+@app.get("/get_event_goods/")
+async def get_event_goods(event: str, request: Request, api_key: str = Depends(verify_api_key)):
+    collection = db["events"]
+    event_document = await collection.find_one({"event_name": event})
+    if not event_document:
+        raise HTTPException(status_code=404, detail="Event not found")
+    goods = event_document.get("goods", [])
+    
+    return goods
+
+
+# Remove item from event
+@app.delete("/remove_item_from_event/")
+async def remove_item_from_event(event: str, id: str, request: Request, api_key: str = Depends(verify_api_key)):
+    collection = db["events"]
+    event_document = await collection.find_one({"event_name": event})
+    if not event_document:
+        raise HTTPException(status_code=404, detail="Event not found")
+    
+    # Attempt to remove the item from the goods array
+    update_result = await collection.update_one(
+        {"event_name": event},
+        {"$pull": {"goods": {"id": id,}}}
+    )
+    
+    if update_result.modified_count > 0:
+        return {"status": "success", "message": "Item removed from event successfully"}
+    
+    raise HTTPException(status_code=404, detail="Item not found in event")
+
+@app.put("/update_item_in_event/")
+async def update_item_in_event(
+    event: str,
+    item_id: str,
+    new_item: str,
+    new_price: float,
+    new_payers: List[str],
+    request: Request,
+    api_key: str = Depends(verify_api_key)
+):
+    collection = db["events"]
+    event_document = await collection.find_one({"event_name": event})
+
+    if not event_document:
+        raise HTTPException(status_code=404, detail="Event not found")
+
+    # Prepare the fields to update
+    update_fields = {}
+    update_fields["goods.$.item"] = new_item
+    update_fields["goods.$.price"] = new_price
+    update_fields["goods.$.payers"] = new_payers
+
+    # Perform the update operation
+    update_result = await collection.update_one(
+        {"event_name": event, "goods.id": item_id},
+        {"$set": update_fields}
+    )
+
+    if update_result.modified_count > 0:
+        return {"status": "success", "message": "Item updated successfully"}
+    
+    raise HTTPException(status_code=500, detail="Failed to update item")

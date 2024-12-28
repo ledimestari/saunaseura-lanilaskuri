@@ -171,7 +171,7 @@ export const updateItemInEvent = async (
           new_price: newPrice,
         },
         headers: {
-          Authorization: `Bearer fbce26ff-2fbf-436d-9175-8ebf4f7f962b`,
+          Authorization: `Bearer ${apiKey}`,
           accept: "application/json",
           "Content-Type": "application/json",
         },
