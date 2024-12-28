@@ -85,3 +85,45 @@ export const createEvent = async (event_name, description) => {
     throw error;
   }
 };
+
+export const getEventGoods = async (event) => {
+  try {
+    const response = await api.get(`/get_event_goods/?event=${event}`, {
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        accept: "application/json",
+      },
+    });
+    return response.data;
+  } catch (error) {
+    console.error(
+      "Authorization failed:",
+      error.response?.data || error.message
+    );
+    throw new Error("Authorization failed");
+  }
+};
+
+// Create good for an event
+export const createGood = async (event, goodName, goodPrice, payers) => {
+  try {
+    const response = await api.post(
+      `http://192.168.1.180:8000/add_item_to_event/?event=${event}&item=${goodName}&price=${goodPrice}`,
+      payers,
+      {
+        headers: {
+          Authorization: `Bearer ${apiKey}`,
+          accept: "application/json",
+          "Content-Type": "application/json",
+        },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error(
+      "Error creating item:",
+      error.response?.data || error.message
+    );
+    throw error;
+  }
+};

@@ -1,0 +1,116 @@
+.EventPage-Mainblock {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  height: 100%;
+}
+
+.Mainblock-Upper {
+  display: flex;
+  flex: 0.1;
+  flex-direction: row;
+  width: 90%;
+  padding: 5px 20px 0px 0px;
+  box-sizing: border-box;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.Mainblock-Upper #left {
+  display: flex;
+  flex: 1;
+  justify-content: flex-start;
+  flex-direction: row;
+  align-items: center;
+  gap: 20px;
+}
+
+.Mainblock-Upper #left-inner {
+  display: flex;
+  justify-content: flex-start;
+  flex-direction: row;
+  align-items: center;
+  gap: 5px;
+}
+
+.Mainblock-Upper #left-inner:hover {
+  cursor: pointer;
+  color: #858585;
+}
+
+.Mainblock-Upper #center {
+  display: flex;
+  flex: 1;
+  justify-content: center;
+}
+
+.Mainblock-Upper #right {
+  display: flex;
+  height: 10%;
+  justify-content: flex-end;
+}
+
+.Mainblock-Table {
+  display: flex;
+  height: 400px;
+  width: 90%;
+  padding-right: 10px;
+  margin-top: 20px;
+  margin-bottom: 0px;
+  box-sizing: border-box;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  overflow-y: auto;
+}
+
+.Mainblock-Lower {
+  display: flex;
+  flex-direction: row;
+  flex: 1;
+  width: 100%;
+  padding: 0px 20px 0px 20px;
+  box-sizing: border-box;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.Mainblock-Lower #left {
+  display: flex;
+  flex: 0.2;
+  justify-content: flex-start;
+  flex-direction: column;
+}
+
+.Mainblock-Lower #center {
+  display: flex;
+  flex: 0.6;
+  justify-content: center;
+}
+
+.Mainblock-Lower #right {
+  display: flex;
+  flex: 0.2;
+  justify-content: flex-end;
+}
+
+/* Custom scrollbar styles */
+.Mainblock-Table::-webkit-scrollbar {
+  width: 2px;
+}
+
+.Mainblock-Table::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+.Mainblock-Table::-webkit-scrollbar-thumb {
+  background: #888;
+}
+
+.Mainblock-Table::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}
+
+/* Custom scrollbar styles end */

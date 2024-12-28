@@ -2,12 +2,7 @@ import React, { useState, useEffect } from "react";
 import LoadingSpinner from "../components/loading-spinner";
 import "./../styles/MainPage.css";
 import "./../styles/Components.css";
-import {
-  authCheck,
-  healthCheck,
-  getEvents,
-  createEvent,
-} from "../helpers/queryServices";
+import { authCheck, getEvents, createEvent } from "../helpers/queryServices";
 
 import Box from "@mui/material/Box";
 import Modal from "@mui/material/Modal";
@@ -27,30 +22,19 @@ const modalStyle = {
   gap: 20,
 };
 
-const formStyle = {
-  color: "white",
-  backgroundColor: "transparent",
-  borderBottom: "2px solid white",
-  outline: "none",
-  marginBottom: "20px",
-  height: "30px",
-  width: "200px",
-};
-
-const MainPage = () => {
+const MainPage = ({ onEventSelect }) => {
   const [loading, setLoading] = useState(false);
   const [password, setPassword] = useState("");
   const [wrongPassword, setWrongPassword] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [events, setEvents] = useState([]);
 
-  const [modalOpen, setModalOpen] = React.useState(false);
+  const [modalOpen, setModalOpen] = useState(false);
   const [eventName, setEventName] = useState("");
   const [eventDesc, setEventDesc] = useState("");
   const handleModalOpen = () => setModalOpen(true);
   const handleModalClose = () => setModalOpen(false);
 
-  // Check if user is authenticated on page load
   useEffect(() => {
     const storedAuth = localStorage.getItem("isAuthenticated");
     if (storedAuth) {
@@ -71,10 +55,8 @@ const MainPage = () => {
     setLoading(true);
     try {
       const response = await getEvents();
-      console.log("events:", response);
       setEvents(response);
     } catch (error) {
-      console.error("Error fetching events:", error);
       setEvents([]);
     } finally {
       setLoading(false);
@@ -183,21 +165,21 @@ const MainPage = () => {
                 <p>Laskurin nimi:</p>
                 <form>
                   <input
+                    className="form-input"
                     type="text"
                     placeholder="Nimi"
                     value={eventName}
                     onChange={handleEventName}
-                    style={formStyle}
                   />
                 </form>
                 <p>Laskurin kuvaus:</p>
                 <form onSubmit={null}>
                   <input
+                    className="form-input"
                     type="text"
                     placeholder="Kuvaus"
                     value={eventDesc}
                     onChange={handleEventDesc}
-                    style={formStyle}
                   />
                 </form>
                 <button onClick={handleEventCreation} className="ButtonStyle">
@@ -218,22 +200,23 @@ const MainPage = () => {
                 <LoadingSpinner />
               </div>
             ) : (
-              <>
-                <div id="content">
-                  {events.length === 0 ? (
-                    <p>
-                      Ei olemassa olevia laskureita. Luo uusi laskuri
-                      vasemmalta.
-                    </p>
-                  ) : (
-                    events.map((item, index) => (
-                      <button key={index} className="ButtonStyle">
-                        {item.event_name}
-                      </button>
-                    ))
-                  )}
-                </div>
-              </>
+              <div id="content">
+                {events.length === 0 ? (
+                  <p>
+                    Ei olemassa olevia laskureita. Luo uusi laskuri vasemmalta.
+                  </p>
+                ) : (
+                  events.map((item, index) => (
+                    <button
+                      key={index}
+                      className="ButtonStyle"
+                      onClick={() => onEventSelect(item.event_name)}
+                    >
+                      {item.event_name}
+                    </button>
+                  ))
+                )}
+              </div>
             )}
           </div>
         </div>
