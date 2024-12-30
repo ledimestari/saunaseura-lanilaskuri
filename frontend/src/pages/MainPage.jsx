@@ -163,7 +163,11 @@ const MainPage = ({ onEventSelect }) => {
             >
               <Box sx={modalStyle}>
                 <p>Laskurin nimi:</p>
-                <form>
+                <form
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                  }}
+                >
                   <input
                     className="form-input"
                     type="text"
@@ -173,7 +177,11 @@ const MainPage = ({ onEventSelect }) => {
                   />
                 </form>
                 <p>Laskurin kuvaus:</p>
-                <form onSubmit={null}>
+                <form
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                  }}
+                >
                   <input
                     className="form-input"
                     type="text"
@@ -182,12 +190,18 @@ const MainPage = ({ onEventSelect }) => {
                     onChange={handleEventDesc}
                   />
                 </form>
-                <button onClick={handleEventCreation} className="ButtonStyle">
-                  Luo
-                </button>
-                <button onClick={handleModalClose} className="ButtonStyle">
-                  Sulje
-                </button>
+                <div style={{ paddingTop: "10px" }}>
+                  <button
+                    disabled={eventName.length <= 0}
+                    onClick={handleEventCreation}
+                    className="ButtonStyle"
+                  >
+                    Luo
+                  </button>
+                  <button onClick={handleModalClose} className="ButtonStyle">
+                    Sulje
+                  </button>
+                </div>
               </Box>
             </Modal>
           </div>

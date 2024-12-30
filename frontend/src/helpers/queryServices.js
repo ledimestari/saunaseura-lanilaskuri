@@ -108,7 +108,7 @@ export const getEventGoods = async (event) => {
 export const createGood = async (event, goodName, goodPrice, payers) => {
   try {
     const response = await api.post(
-      `http://192.168.1.180:8000/add_item_to_event/?event=${event}&item=${goodName}&price=${goodPrice}`,
+      `/add_item_to_event/?event=${event}&item=${goodName}&price=${goodPrice}`,
       payers,
       {
         headers: {
@@ -132,7 +132,7 @@ export const createGood = async (event, goodName, goodPrice, payers) => {
 export const deleteItem = async (event, id) => {
   try {
     const response = await api.delete(
-      `http://192.168.1.180:8000/remove_item_from_event/?event=${event}&id=${id}`,
+      `/remove_item_from_event/?event=${event}&id=${id}`,
       {
         headers: {
           Authorization: `Bearer ${apiKey}`,
@@ -160,16 +160,58 @@ export const updateItemInEvent = async (
   newPayers
 ) => {
   try {
-    const response = await axios.put(
-      `http://192.168.1.180:8000/update_item_in_event/`,
-      newPayers,
+    const response = await api.put(`/update_item_in_event/`, newPayers, {
+      params: {
+        event: event,
+        item_id: itemId,
+        new_item: newItem,
+        new_price: newPrice,
+      },
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        accept: "application/json",
+        "Content-Type": "application/json",
+      },
+    });
+    return response.data;
+  } catch (error) {
+    console.error(
+      "Error updating item in event:",
+      error.response?.data || error.message
+    );
+    throw error;
+  }
+};
+
+export const uploadReceiptAndProcess = async (file) => {
+  try {
+    const formData = new FormData();
+    formData.append("file", file);
+
+    const response = await api.post("/process-receipt/", formData, {
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        "Content-Type": "multipart/form-data",
+        accept: "application/json",
+      },
+    });
+    return response.data;
+  } catch (error) {
+    console.error(
+      "Error uploading file:",
+      error.response?.data || error.message
+    );
+    throw error;
+  }
+};
+
+// Create multiple goods for an event
+export const createGoods = async (event, items) => {
+  try {
+    const response = await api.post(
+      `/add_items_to_event/?event=${event}`,
+      items,
       {
-        params: {
-          event: event,
-          item_id: itemId,
-          new_item: newItem,
-          new_price: newPrice,
-        },
         headers: {
           Authorization: `Bearer ${apiKey}`,
           accept: "application/json",
@@ -180,7 +222,7 @@ export const updateItemInEvent = async (
     return response.data;
   } catch (error) {
     console.error(
-      "Error updating item in event:",
+      "Error adding items to event:",
       error.response?.data || error.message
     );
     throw error;

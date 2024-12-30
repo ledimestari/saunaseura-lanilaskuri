@@ -27,10 +27,18 @@
 }
 
 .LoadingSpinner {
-  height: 70px;
-  width: 70px;
   border-radius: 50%;
   animation: spin 2s linear infinite;
+}
+
+.spinner-70 {
+  height: 70px;
+  width: 70px;
+}
+
+.spinner-150 {
+  height: 150px;
+  width: 150px;
 }
 
 @keyframes spin {
@@ -102,7 +110,14 @@
   background-color: transparent;
   border-bottom: 2px solid white;
   outline: none;
-  margin-bottom: 20px;
   height: 30px;
   width: 200px;
+}
+
+.Input-HelperText {
+  color: #969696;
+  font-size: 13px;
+  padding-top: 2px;
+  padding-bottom: 10px;
+  margin: 0px;
 }
