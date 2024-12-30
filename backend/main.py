@@ -1,7 +1,9 @@
 import os
-from fastapi import FastAPI, HTTPException, Depends, Request
+import shutil
+from fastapi import FastAPI, HTTPException, Depends, Request, File, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from fastapi.responses import JSONResponse
 from slowapi import Limiter
 from slowapi.util import get_remote_address
 from motor.motor_asyncio import AsyncIOMotorClient
@@ -9,6 +11,7 @@ from bson import ObjectId
 from dotenv import load_dotenv
 from typing import List
 from pydantic import BaseModel
+from receipt_parser import handle_receipt
 import uuid
 
 # Setup env variables for api key
@@ -49,6 +52,12 @@ db = client[DATABASE_NAME]
 class EventCreateRequest(BaseModel):
     event_name: str
     description: str
+
+class Item(BaseModel):
+    item: str
+    price: float
+    payers: List[str]
+    id: str
 
 
 def api_key_header(authorization: HTTPAuthorizationCredentials = Depends(HTTPBearer())):
@@ -118,6 +127,41 @@ async def add_item_to_event(event: str, item: str, price: float, payers: List[st
     raise HTTPException(status_code=500, detail="Failed to add item")
 
 
+# Add multiple items to event
+@app.post("/add_items_to_event/")
+async def add_item_to_event(
+    event: str, 
+    items: List[Item], 
+    request: Request, 
+    api_key: str = Depends(verify_api_key)
+):
+    
+    collection = db["events"]
+    event_document = await collection.find_one({"event_name": event})
+    
+    if not event_document:
+        raise HTTPException(status_code=404, detail="Event not found")
+    
+    for row in items:
+        
+        try:
+            price = float(row.price)
+        except ValueError:
+            raise HTTPException(status_code=400, detail=f"Invalid price value: {row.price}")
+
+        new_item = {"item": row.item, "price": price, "payers": row.payers, "id": row.id}
+        
+        update_result = await collection.update_one(
+            {"event_name": event},
+            {"$push": {"goods": new_item}}
+        )
+        
+        if update_result.modified_count == 0:
+            raise HTTPException(status_code=500, detail=f"Failed to add item {row.item}")
+    
+    return {"status": "success", "message": "Items added to event successfully"}
+
+
 # Get event names and IDs
 @app.get("/get_events/")
 async def get_events(request: Request, api_key: str = Depends(verify_api_key)):
@@ -163,6 +207,7 @@ async def remove_item_from_event(event: str, id: str, request: Request, api_key:
     
     raise HTTPException(status_code=404, detail="Item not found in event")
 
+# Update an item in an event
 @app.put("/update_item_in_event/")
 async def update_item_in_event(
     event: str,
@@ -179,13 +224,11 @@ async def update_item_in_event(
     if not event_document:
         raise HTTPException(status_code=404, detail="Event not found")
 
-    # Prepare the fields to update
     update_fields = {}
     update_fields["goods.$.item"] = new_item
     update_fields["goods.$.price"] = new_price
     update_fields["goods.$.payers"] = new_payers
 
-    # Perform the update operation
     update_result = await collection.update_one(
         {"event_name": event, "goods.id": item_id},
         {"$set": update_fields}
@@ -195,3 +238,28 @@ async def update_item_in_event(
         return {"status": "success", "message": "Item updated successfully"}
     
     raise HTTPException(status_code=500, detail="Failed to update item")
+
+# Handle the receipt and parse all items from it
+@app.post("/process-receipt/")
+async def process_file(request: Request, api_key: str = Depends(verify_api_key), file: UploadFile = File(...) ):
+    allowed_extensions = {"png", "jpg", "jpeg", "pdf"}
+    file_extension = file.filename.split(".")[-1].lower()
+    if file_extension not in allowed_extensions:
+        raise HTTPException(
+            status_code=400, 
+            detail=f"Unsupported file type: {file_extension}. Allowed types: {allowed_extensions}"
+        )
+
+    # Save the file temporarily
+    temp_file_path = f"temp_{file.filename}"
+    with open(temp_file_path, "wb") as buffer:
+        shutil.copyfileobj(file.file, buffer)
+
+    try:
+        result = handle_receipt(temp_file_path)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error processing file: {str(e)}")
+    finally:
+        os.remove(temp_file_path)
+
+    return JSONResponse(result)

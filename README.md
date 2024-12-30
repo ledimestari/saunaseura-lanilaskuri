@@ -38,26 +38,30 @@ Frontend: Provides the user interface for managing events and costs.
    Windows:  
    `fastapi-env\Scripts\activate`  
    Linux/Mac:  
-   `source fastapi-env/bin/activat`
+   `source fastapi-env/bin/activate`
 
 5. Install Dependencies
 
    `pip install -r requirements.txt`
 
-6. Install MongoDB
+6. Install tesseract OCR engine 
+
+   `sudo apt-get install tesseract-ocr`
+
+7. Install MongoDB
 
    `sudo apt install -y mongodb`
 
-7. Start and Enable MongoDB
+8. Start and Enable MongoDB
 
    `sudo systemctl start mongodb`  
    `sudo systemctl enable mongodb`
 
-8. Run the FastAPI Server
+9. Run the FastAPI Server
 
    `uvicorn main:app --host your_ip --port your_port --reload`
 
-9. Backend is Ready! 🎉
+10. Backend is Ready! 🎉
 
 ---
 
