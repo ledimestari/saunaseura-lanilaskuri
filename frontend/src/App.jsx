@@ -4,6 +4,7 @@ import MainPage from "./pages/MainPage";
 import EventPage from "./pages/EventPage";
 import { healthCheck } from "./helpers/queryServices";
 import "./styles/Components.css";
+import ArrowBackIosIcon from "@mui/icons-material/ArrowBackIos";
 
 function App() {
   const [dbHealth, setDbHealth] = useState(null);
@@ -18,8 +19,8 @@ function App() {
     fetchHealth();
   }, []);
 
-  const handleEventSelect = (eventTitle) => {
-    setSelectedEvent(eventTitle);
+  const handleEventSelect = (event) => {
+    setSelectedEvent(event);
     setCurrentPage("EventPage");
   };
 
@@ -32,15 +33,28 @@ function App() {
       <div className="TopBar">
         <div className="TopBarTitleLeft">
           {currentPage === "EventPage" ? (
-            <p onClick={handleBackToMain} className="hoverable-icon">
-              takaisin
-            </p>
+            <>
+              <div onClick={handleBackToMain} className="hoverable-div">
+                {" "}
+                <ArrowBackIosIcon fontSize="10px" />
+                <p>takaisin</p>
+              </div>
+            </>
           ) : (
             `ver. 1.0 | db: ${dbHealth}`
           )}
         </div>
         <div className="TopBarTitleCenter">
-          {currentPage === "EventPage" ? selectedEvent : "lanilaskuri"}
+          <div id="item-title">
+            {" "}
+            {currentPage === "EventPage"
+              ? selectedEvent.event_name
+              : "lanilaskuri"}
+          </div>
+          <div id="item-description">
+            {" "}
+            {currentPage === "EventPage" ? selectedEvent.description : null}
+          </div>
         </div>
         <div className="TopBarTitleRight">[dev]</div>
       </div>
@@ -48,7 +62,10 @@ function App() {
         {currentPage === "MainPage" ? (
           <MainPage onEventSelect={handleEventSelect} />
         ) : (
-          <EventPage eventTitle={selectedEvent} onBack={handleBackToMain} />
+          <EventPage
+            eventTitle={selectedEvent.event_name}
+            onBack={handleBackToMain}
+          />
         )}
       </div>
     </div>

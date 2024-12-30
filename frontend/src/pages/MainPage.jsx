@@ -224,7 +224,7 @@ const MainPage = ({ onEventSelect }) => {
                     <button
                       key={index}
                       className="ButtonStyle"
-                      onClick={() => onEventSelect(item.event_name)}
+                      onClick={() => onEventSelect(item)}
                     >
                       {item.event_name}
                     </button>
