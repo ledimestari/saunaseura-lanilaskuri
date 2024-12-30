@@ -171,7 +171,8 @@ async def get_events(request: Request, api_key: str = Depends(verify_api_key)):
     for item in items:
         events.append({
             "id": str(item["_id"]),
-            "event_name": item["event_name"]
+            "event_name": item["event_name"],
+            "description": item["description"]
         })
     return events
 
