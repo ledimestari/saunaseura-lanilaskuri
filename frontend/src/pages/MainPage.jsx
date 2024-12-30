@@ -33,7 +33,11 @@ const MainPage = ({ onEventSelect }) => {
   const [eventName, setEventName] = useState("");
   const [eventDesc, setEventDesc] = useState("");
   const handleModalOpen = () => setModalOpen(true);
-  const handleModalClose = () => setModalOpen(false);
+  const handleModalClose = () => {
+    setEventName("");
+    setEventDesc("");
+    setModalOpen(false);
+  };
 
   useEffect(() => {
     const storedAuth = localStorage.getItem("isAuthenticated");
@@ -87,12 +91,18 @@ const MainPage = ({ onEventSelect }) => {
 
   // Update characters to eventName variable when user is typing
   const handleEventName = (e) => {
-    setEventName(e.target.value);
+    const newValue = e.target.value;
+    if (newValue.length <= 50) {
+      setEventName(newValue);
+    }
   };
 
   // Update characters to eventDesc variable when user is typing
   const handleEventDesc = (e) => {
-    setEventDesc(e.target.value);
+    const newValue = e.target.value;
+    if (newValue.length <= 50) {
+      setEventDesc(newValue);
+    }
   };
 
   // Handle password checking and download events when correct
@@ -175,6 +185,7 @@ const MainPage = ({ onEventSelect }) => {
                     value={eventName}
                     onChange={handleEventName}
                   />
+                  <div className="Input-HelperText">Max. 50 merkkiä</div>
                 </form>
                 <p>Laskurin kuvaus:</p>
                 <form
@@ -189,6 +200,7 @@ const MainPage = ({ onEventSelect }) => {
                     value={eventDesc}
                     onChange={handleEventDesc}
                   />
+                  <div className="Input-HelperText">Max. 50 merkkiä</div>
                 </form>
                 <div style={{ paddingTop: "10px" }}>
                   <button
