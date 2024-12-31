@@ -459,7 +459,21 @@ const EventPage = ({ eventTitle, onBack }) => {
                   />
                 ))}
               </div>
-              <div>Lisää maksaja:</div>
+              <div className="Modal-MiddleTitles">
+                <div id="left"></div> <div id="middle">Lisää maksaja:</div>
+                <div id="right">
+                  yht:{" "}
+                  {processedReceiptItems
+                    .reduce(
+                      (accumulator, item) =>
+                        accumulator + (Number(item.price) || 0),
+                      0
+                    )
+                    .toFixed(2)}
+                  €
+                </div>
+              </div>
+
               <form
                 onSubmit={(e) => {
                   e.preventDefault();

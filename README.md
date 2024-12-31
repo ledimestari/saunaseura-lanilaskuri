@@ -1,4 +1,4 @@
-# 🎮 LAN Party Cost Management Tool
+## 🎮 LAN Party Cost Management Tool
 
 A project for managing costs during a LAN party. The frontend is built with React + Vite, and the backend is powered by FastAPI + MongoDB.  
 This project is intended to be run on Linux.  
@@ -44,7 +44,7 @@ Frontend: Provides the user interface for managing events and costs.
 
    `pip install -r requirements.txt`
 
-6. Install tesseract OCR engine 
+6. Install tesseract OCR engine
 
    `sudo apt-get install tesseract-ocr`
 
@@ -88,6 +88,10 @@ Frontend: Provides the user interface for managing events and costs.
 
 ---
 
-### 📝 TODO:
+### 🚀 Deployment:
 
-- Add deployment instructions for production setup.
+Backend:
+Backend is deployed the same way as in the backend setup. Just run the uvicorn command in a linux `screen` or similar so it doesn't shut down when you close the cli.
+
+Frontend:
+Build the frontend in `frontend` directory by running `npm run build`. This command creates a `dist` directory. Copy the contents of the directory on a server that will be hosting the site.

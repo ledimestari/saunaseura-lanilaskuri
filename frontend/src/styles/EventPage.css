@@ -120,6 +120,35 @@
   align-items: center;
 }
 
+.Modal-MiddleTitles {
+  display: flex;
+  flex-direction: row;
+  width: 90%;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.Modal-MiddleTitles #middle {
+  display: flex;
+  flex: 1;
+  justify-content: center;
+  align-items: center;
+}
+
+.Modal-MiddleTitles #left {
+  display: flex;
+  flex: 1;
+  justify-content: center;
+  align-items: center;
+}
+
+.Modal-MiddleTitles #right {
+  display: flex;
+  flex: 1;
+  justify-content: flex-end;
+  align-items: center;
+}
+
 /* Custom scrollbar styles */
 .Mainblock-Table::-webkit-scrollbar {
   width: 2px;
