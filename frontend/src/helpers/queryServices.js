@@ -5,20 +5,24 @@ export const api = axios.create({
   baseURL: `http://nuc.ihanakangas.fi:8000`,
 });
 
-// Get api key from .env. Note that this is handled differently in vite.
-const apiKey = import.meta.env.VITE_API_KEY;
-
-// Verify main page password
+// Verify main page password and acquire token
 export const authCheck = async (password) => {
   try {
     const response = await api.get("/auth", {
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-      },
       params: { password: password },
     });
+
+    // Store the new token from the response
+    const newToken = response.data.token;
+    localStorage.setItem("authToken", newToken);
+    console.log("New token stored:", newToken);
+
     return response.data;
   } catch (error) {
+    console.error(
+      "Authentication failed:",
+      error.response?.data?.detail || error.message
+    );
     throw error;
   }
 };
@@ -28,7 +32,7 @@ export const healthCheck = async () => {
   try {
     const response = await api.get("/health", {
       headers: {
-        Authorization: `Bearer ${apiKey}`,
+        Authorization: `Bearer ${localStorage.getItem("authToken") || ""}`,
       },
     });
     return response.data;
@@ -46,7 +50,7 @@ export const getEvents = async () => {
   try {
     const response = await api.get("/get_events", {
       headers: {
-        Authorization: `Bearer ${apiKey}`,
+        Authorization: `Bearer ${localStorage.getItem("authToken") || ""}`,
       },
     });
     return response.data;
@@ -70,7 +74,7 @@ export const createEvent = async (event_name, description) => {
       },
       {
         headers: {
-          Authorization: `Bearer ${apiKey}`,
+          Authorization: `Bearer ${localStorage.getItem("authToken") || ""}`,
           accept: "application/json",
           "Content-Type": "application/json",
         },
@@ -90,7 +94,7 @@ export const getEventGoods = async (event) => {
   try {
     const response = await api.get(`/get_event_goods/?event=${event}`, {
       headers: {
-        Authorization: `Bearer ${apiKey}`,
+        Authorization: `Bearer ${localStorage.getItem("authToken") || ""}`,
         accept: "application/json",
       },
     });
@@ -112,7 +116,7 @@ export const createGood = async (event, goodName, goodPrice, payers) => {
       payers,
       {
         headers: {
-          Authorization: `Bearer ${apiKey}`,
+          Authorization: `Bearer ${localStorage.getItem("authToken") || ""}`,
           accept: "application/json",
           "Content-Type": "application/json",
         },
@@ -135,7 +139,7 @@ export const deleteItem = async (event, id) => {
       `/remove_item_from_event/?event=${event}&id=${id}`,
       {
         headers: {
-          Authorization: `Bearer ${apiKey}`,
+          Authorization: `Bearer ${localStorage.getItem("authToken") || ""}`,
           accept: "application/json",
           "Content-Type": "application/json",
         },
@@ -168,7 +172,7 @@ export const updateItemInEvent = async (
         new_price: newPrice,
       },
       headers: {
-        Authorization: `Bearer ${apiKey}`,
+        Authorization: `Bearer ${localStorage.getItem("authToken") || ""}`,
         accept: "application/json",
         "Content-Type": "application/json",
       },
@@ -190,7 +194,7 @@ export const uploadReceiptAndProcess = async (file) => {
 
     const response = await api.post("/process-receipt/", formData, {
       headers: {
-        Authorization: `Bearer ${apiKey}`,
+        Authorization: `Bearer ${localStorage.getItem("authToken") || ""}`,
         "Content-Type": "multipart/form-data",
         accept: "application/json",
       },
@@ -213,7 +217,7 @@ export const createGoods = async (event, items) => {
       items,
       {
         headers: {
-          Authorization: `Bearer ${apiKey}`,
+          Authorization: `Bearer ${localStorage.getItem("authToken") || ""}`,
           accept: "application/json",
           "Content-Type": "application/json",
         },

@@ -21,47 +21,44 @@ Frontend: Provides the user interface for managing events and costs.
 
 ### 🛠️ Backend Setup
 
+For the backend, authentication is handled by creating a token for each user when logging in. A token is only created when the password is correct. The user can bypass the login page in the frontend if they really want, but no queries can be made.
+
 1. Navigate to the Backend Folder
 
    `cd backend`
 
-2. Create a .env File  
-   Generate an API key and add it to the .env file:
-
-   `API_KEY=your_api_key`
-
-3. Set Up a Virtual Environment
+2. Set Up a Virtual Environment
 
    `python -m venv fastapi-env`
 
-4. Activate the Virtual Environment  
+3. Activate the Virtual Environment  
    Windows:  
    `fastapi-env\Scripts\activate`  
    Linux/Mac:  
    `source fastapi-env/bin/activate`
 
-5. Install Dependencies
+4. Install Dependencies
 
    `pip install -r requirements.txt`
 
-6. Install tesseract OCR engine
+5. Install tesseract OCR engine
 
    `sudo apt-get install tesseract-ocr`
 
-7. Install MongoDB
+6. Install MongoDB
 
    `sudo apt install -y mongodb`
 
-8. Start and Enable MongoDB
+7. Start and Enable MongoDB
 
    `sudo systemctl start mongodb`  
    `sudo systemctl enable mongodb`
 
-9. Run the FastAPI Server
+8. Run the FastAPI Server
 
    `uvicorn main:app --host your_ip --port your_port --reload`
 
-10. Backend is Ready! 🎉
+9. Backend is Ready! 🎉
 
 ---
 
@@ -71,20 +68,15 @@ Frontend: Provides the user interface for managing events and costs.
 
    `cd frontend`
 
-2. Create a .env File  
-   Add the generated API key:
-
-   `VITE_API_KEY=your_api_key`
-
-3. Install Dependencies
+2. Install Dependencies
 
    `npm install`
 
-4. Run the Development Server
+3. Run the Development Server
 
    `npm run dev`
 
-5. Frontend is Ready! 🎉
+4. Frontend is Ready! 🎉
 
 ---
 

@@ -40,7 +40,7 @@ const MainPage = ({ onEventSelect }) => {
   };
 
   useEffect(() => {
-    const storedAuth = localStorage.getItem("isAuthenticated");
+    const storedAuth = localStorage.getItem("authToken");
     if (storedAuth) {
       setIsAuthenticated(true);
       handleEventLoading();
@@ -50,7 +50,7 @@ const MainPage = ({ onEventSelect }) => {
   // TODO: Implement logout button on page
   const handleLogout = () => {
     setIsAuthenticated(false);
-    localStorage.removeItem("isAuthenticated");
+    localStorage.removeItem("authToken");
     setPassword("");
   };
 
