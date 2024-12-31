@@ -111,7 +111,8 @@ const MainPage = ({ onEventSelect }) => {
     setLoading(true);
     try {
       const response = await authCheck(password);
-      if (response.status === "ok") {
+
+      if (response.token) {
         setIsAuthenticated(true);
         localStorage.setItem("isAuthenticated", "true");
         handleEventLoading();
@@ -121,9 +122,11 @@ const MainPage = ({ onEventSelect }) => {
     } catch (err) {
       if (err.response && err.response.status === 403) {
         setWrongPassword(true);
+      } else {
+        console.error("Error:", err.message);
       }
     } finally {
-      setLoading(false);
+      setLoading(false); // Stop loading regardless of the outcome
     }
   };
 
