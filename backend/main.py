@@ -12,7 +12,9 @@ from dotenv import load_dotenv
 from typing import List
 from pydantic import BaseModel
 from receipt_parser import handle_receipt
+from datetime import datetime, timedelta
 import uuid
+import secrets
 
 # Setup env variables for api key
 load_dotenv()
@@ -29,7 +31,6 @@ app.state.limiter = limiter
 origins = [
     "https://nuc.ihanakangas.fi",
     "http://nuc.ihanakangas.fi",
-    "http://localhost:3000",
     "http://localhost:5173"
 ]
 
@@ -47,6 +48,8 @@ DATABASE_NAME = "saunaseura-lanilaskuri"
 
 client = AsyncIOMotorClient(MONGO_URI)
 db = client[DATABASE_NAME]
+TOKENS = {} # Move token storage to db
+TOKEN_EXPIRATION = timedelta(hours=1)
 
 
 class EventCreateRequest(BaseModel):
@@ -60,40 +63,44 @@ class Item(BaseModel):
     id: str
 
 
-def api_key_header(authorization: HTTPAuthorizationCredentials = Depends(HTTPBearer())):
-    return authorization.credentials
+# Create token for frontend
+def create_token():
+    return secrets.token_hex(16)
 
+# Validate token on every api call
+def validate_token(request: Request):
+    token = request.headers.get("Authorization")
+    if not token:
+        raise HTTPException(status_code=401, detail="Unauthorized: Token missing")
 
-# Verify API Key
-async def verify_api_key(authorization: HTTPAuthorizationCredentials = Depends(HTTPBearer())):
-    api_key = authorization.credentials  # The API key is in the 'credentials' field
-    if api_key != API_KEY:
-        raise HTTPException(status_code=403, detail="Unauthorized: Invalid API Key")
-    return api_key
+    token = token.replace("Bearer ", "")
 
+    if token not in TOKENS or TOKENS[token] < datetime.utcnow():
+        raise HTTPException(status_code=401, detail="Unauthorized: Invalid or expired token")
 
-# Verify password
-async def verify_password(password: str):
-    if password != SITE_PASSWORD:
-        raise HTTPException(status_code=403, detail="Unauthorized: Invalid password")
-    return password
-
+    return token
 
 # Health check endpoint
 @app.get("/health")
 @limiter.limit("10/minute")
-async def health_check(request: Request, api_key: str = Depends(verify_api_key)):
+async def health_check(request: Request):
     try:
         await db.command("ping")
         return {"status": "ok", "database": "connected"}
     except Exception as e:
         return {"status": "error", "database": "not connected", "details": str(e)}
 
-# Auth check with both password and API key validation
+
+# Auth check, return token if password is correct. Token is checked against in queries.
 @app.get("/auth")
 @limiter.limit("10/minute")
-async def check_password(request: Request, password: str, api_key: str = Depends(verify_api_key), verified_password: str = Depends(verify_password)):
-    return {"status": "ok", "message": "Password and API key verified successfully"}
+async def check_password(request: Request, password: str):
+    if password != SITE_PASSWORD:
+        raise HTTPException(status_code=401, detail="Unauthorized: Invalid password")
+    
+    token = create_token()
+    TOKENS[token] = datetime.utcnow() + TOKEN_EXPIRATION
+    return {"token": token}
 
 
 # Create an event
@@ -101,7 +108,7 @@ async def check_password(request: Request, password: str, api_key: str = Depends
 # TODO: Add handling of too long descriptions
 @app.post("/create_event/")
 @limiter.limit("10/minute")
-async def create_event(event_data: EventCreateRequest, request: Request, api_key: str = Depends(verify_api_key)):
+async def create_event(event_data: EventCreateRequest, request: Request, token: str = Depends(validate_token)):
     collection = db["events"]
     new_item = {"event_name": event_data.event_name, "description": event_data.description, "goods": []}
     result = await collection.insert_one(new_item)
@@ -113,7 +120,7 @@ async def create_event(event_data: EventCreateRequest, request: Request, api_key
 # Add item to event
 @app.post("/add_item_to_event/")
 @limiter.limit("30/minute")
-async def add_item_to_event(event: str, item: str, price: float, payers: List[str], request: Request, api_key: str = Depends(verify_api_key)):
+async def add_item_to_event(event: str, item: str, price: float, payers: List[str], request: Request, token: str = Depends(validate_token)):
     collection = db["events"]
     event_document = await collection.find_one({"event_name": event})
     if not event_document:
@@ -135,7 +142,7 @@ async def add_item_to_event(
     event: str, 
     items: List[Item], 
     request: Request, 
-    api_key: str = Depends(verify_api_key)
+    token: str = Depends(validate_token)
 ):
     
     collection = db["events"]
@@ -167,7 +174,7 @@ async def add_item_to_event(
 # Get event names and IDs
 @app.get("/get_events/")
 @limiter.limit("40/minute")
-async def get_events(request: Request, api_key: str = Depends(verify_api_key)):
+async def get_events(request: Request, token: str = Depends(validate_token)):
     collection = db["events"]
     items = await collection.find().to_list(100)
     events = []
@@ -183,7 +190,7 @@ async def get_events(request: Request, api_key: str = Depends(verify_api_key)):
 # Get goods in events
 @app.get("/get_event_goods/")
 @limiter.limit("40/minute")
-async def get_event_goods(event: str, request: Request, api_key: str = Depends(verify_api_key)):
+async def get_event_goods(event: str, request: Request, token: str = Depends(validate_token)):
     collection = db["events"]
     event_document = await collection.find_one({"event_name": event})
     if not event_document:
@@ -196,7 +203,7 @@ async def get_event_goods(event: str, request: Request, api_key: str = Depends(v
 # Remove item from event
 @app.delete("/remove_item_from_event/")
 @limiter.limit("40/minute")
-async def remove_item_from_event(event: str, id: str, request: Request, api_key: str = Depends(verify_api_key)):
+async def remove_item_from_event(event: str, id: str, request: Request, token: str = Depends(validate_token)):
     collection = db["events"]
     event_document = await collection.find_one({"event_name": event})
     if not event_document:
@@ -223,7 +230,7 @@ async def update_item_in_event(
     new_price: float,
     new_payers: List[str],
     request: Request,
-    api_key: str = Depends(verify_api_key)
+    token: str = Depends(validate_token)
 ):
     collection = db["events"]
     event_document = await collection.find_one({"event_name": event})
@@ -249,7 +256,7 @@ async def update_item_in_event(
 # Handle the receipt and parse all items from it
 @app.post("/process-receipt/")
 @limiter.limit("10/minute")
-async def process_file(request: Request, api_key: str = Depends(verify_api_key), file: UploadFile = File(...) ):
+async def process_file(request: Request, token: str = Depends(validate_token), file: UploadFile = File(...) ):
     allowed_extensions = {"png", "jpg", "jpeg", "pdf"}
     file_extension = file.filename.split(".")[-1].lower()
     if file_extension not in allowed_extensions:
