@@ -112,6 +112,7 @@ async def create_event(event_data: EventCreateRequest, request: Request, api_key
 
 # Add item to event
 @app.post("/add_item_to_event/")
+@limiter.limit("30/minute")
 async def add_item_to_event(event: str, item: str, price: float, payers: List[str], request: Request, api_key: str = Depends(verify_api_key)):
     collection = db["events"]
     event_document = await collection.find_one({"event_name": event})
@@ -129,6 +130,7 @@ async def add_item_to_event(event: str, item: str, price: float, payers: List[st
 
 # Add multiple items to event
 @app.post("/add_items_to_event/")
+@limiter.limit("10/minute")
 async def add_item_to_event(
     event: str, 
     items: List[Item], 
@@ -164,6 +166,7 @@ async def add_item_to_event(
 
 # Get event names and IDs
 @app.get("/get_events/")
+@limiter.limit("40/minute")
 async def get_events(request: Request, api_key: str = Depends(verify_api_key)):
     collection = db["events"]
     items = await collection.find().to_list(100)
@@ -179,6 +182,7 @@ async def get_events(request: Request, api_key: str = Depends(verify_api_key)):
 
 # Get goods in events
 @app.get("/get_event_goods/")
+@limiter.limit("40/minute")
 async def get_event_goods(event: str, request: Request, api_key: str = Depends(verify_api_key)):
     collection = db["events"]
     event_document = await collection.find_one({"event_name": event})
@@ -191,6 +195,7 @@ async def get_event_goods(event: str, request: Request, api_key: str = Depends(v
 
 # Remove item from event
 @app.delete("/remove_item_from_event/")
+@limiter.limit("40/minute")
 async def remove_item_from_event(event: str, id: str, request: Request, api_key: str = Depends(verify_api_key)):
     collection = db["events"]
     event_document = await collection.find_one({"event_name": event})
@@ -210,6 +215,7 @@ async def remove_item_from_event(event: str, id: str, request: Request, api_key:
 
 # Update an item in an event
 @app.put("/update_item_in_event/")
+@limiter.limit("40/minute")
 async def update_item_in_event(
     event: str,
     item_id: str,
@@ -242,6 +248,7 @@ async def update_item_in_event(
 
 # Handle the receipt and parse all items from it
 @app.post("/process-receipt/")
+@limiter.limit("10/minute")
 async def process_file(request: Request, api_key: str = Depends(verify_api_key), file: UploadFile = File(...) ):
     allowed_extensions = {"png", "jpg", "jpeg", "pdf"}
     file_extension = file.filename.split(".")[-1].lower()
