@@ -75,11 +75,12 @@ def validate_token(request: Request):
 
     token = token.replace("Bearer ", "")
 
+    # Check if the token is in the dictionary and if it is expired
     if token not in TOKENS or TOKENS[token] < datetime.utcnow():
+        TOKENS.pop(token, None)  # Remove expired or invalid token from TOKENS
         raise HTTPException(status_code=401, detail="Unauthorized: Invalid or expired token")
 
     return token
-
 # Health check endpoint
 @app.get("/health")
 @limiter.limit("10/minute")
