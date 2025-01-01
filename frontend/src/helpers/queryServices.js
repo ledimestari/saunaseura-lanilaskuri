@@ -1,28 +1,30 @@
-import axios from "axios";
-
-// Create an axios instance with the base URL
-export const api = axios.create({
-  baseURL: `http://nuc.ihanakangas.fi:8000`,
-});
+// Base url for backend
+const BACKEND_BASE_URL = "http://nuc.ihanakangas.fi:8000";
 
 // Verify main page password and acquire token
 export const authCheck = async (password) => {
   try {
-    const response = await api.get("/auth", {
-      params: { password: password },
-    });
+    const response = await fetch(
+      `${BACKEND_BASE_URL}/auth?password=${password}`,
+      {
+        method: "GET",
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error("Authentication failed");
+    }
+
+    const data = await response.json();
 
     // Store the new token from the response
-    const newToken = response.data.token;
+    const newToken = data.token;
     localStorage.setItem("authToken", newToken);
     console.log("New token stored:", newToken);
 
-    return response.data;
+    return data;
   } catch (error) {
-    console.error(
-      "Authentication failed:",
-      error.response?.data?.detail || error.message
-    );
+    console.error("Authentication failed:", error.message);
     throw error;
   }
 };
@@ -30,17 +32,26 @@ export const authCheck = async (password) => {
 // Check database health
 export const healthCheck = async () => {
   try {
-    const response = await api.get("/health", {
+    const response = await fetch(`${BACKEND_BASE_URL}/health`, {
+      method: "GET",
       headers: {
         Authorization: `Bearer ${localStorage.getItem("authToken") || ""}`,
       },
     });
-    return response.data;
+    if (response.status === 401) {
+      localStorage.removeItem("authToken");
+      localStorage.removeItem("isAuthenticated");
+      alert("Session expired. Redirecting to login.");
+      window.location.reload();
+      return null;
+    }
+    if (!response.ok) {
+      throw new Error("Authorization failed");
+    }
+    const data = await response.json();
+    return data;
   } catch (error) {
-    console.error(
-      "Authorization failed:",
-      error.response?.data || error.message
-    );
+    console.error("Authorization failed:", error.message);
     throw new Error("Authorization failed");
   }
 };
@@ -48,17 +59,27 @@ export const healthCheck = async () => {
 // Get events
 export const getEvents = async () => {
   try {
-    const response = await api.get("/get_events", {
+    const response = await fetch(`${BACKEND_BASE_URL}/get_events`, {
+      method: "GET",
       headers: {
         Authorization: `Bearer ${localStorage.getItem("authToken") || ""}`,
+        accept: "application/json",
       },
     });
-    return response.data;
+    if (response.status === 401) {
+      localStorage.removeItem("authToken");
+      localStorage.removeItem("isAuthenticated");
+      alert("Session expired. Redirecting to login.");
+      window.location.reload();
+      return null;
+    }
+    if (!response.ok) {
+      throw new Error("Authorization failed");
+    }
+    const data = await response.json();
+    return data;
   } catch (error) {
-    console.error(
-      "Authorization failed:",
-      error.response?.data || error.message
-    );
+    console.error("Authorization failed:", error.message);
     throw new Error("Authorization failed");
   }
 };
@@ -66,44 +87,63 @@ export const getEvents = async () => {
 // Create event
 export const createEvent = async (event_name, description) => {
   try {
-    const response = await api.post(
-      "/create_event",
-      {
+    const response = await fetch(`${BACKEND_BASE_URL}/create_event`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem("authToken") || ""}`,
+        accept: "application/json",
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
         event_name: event_name,
         description: description,
-      },
-      {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("authToken") || ""}`,
-          accept: "application/json",
-          "Content-Type": "application/json",
-        },
-      }
-    );
-    return response.data;
+      }),
+    });
+    if (response.status === 401) {
+      localStorage.removeItem("authToken");
+      localStorage.removeItem("isAuthenticated");
+      alert("Session expired. Redirecting to login.");
+      window.location.reload();
+      return null;
+    }
+    if (!response.ok) {
+      throw new Error("Error creating event");
+    }
+    const data = await response.json();
+    return data;
   } catch (error) {
-    console.error(
-      "Error creating event:",
-      error.response?.data || error.message
-    );
+    console.error("Error creating event:", error.message);
     throw error;
   }
 };
 
+// Get good for an event
 export const getEventGoods = async (event) => {
   try {
-    const response = await api.get(`/get_event_goods/?event=${event}`, {
-      headers: {
-        Authorization: `Bearer ${localStorage.getItem("authToken") || ""}`,
-        accept: "application/json",
-      },
-    });
-    return response.data;
-  } catch (error) {
-    console.error(
-      "Authorization failed:",
-      error.response?.data || error.message
+    const response = await fetch(
+      `${BACKEND_BASE_URL}/get_event_goods/?event=${event}`,
+      {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("authToken") || ""}`,
+          accept: "application/json",
+        },
+      }
     );
+    if (response.status === 401) {
+      localStorage.removeItem("authToken");
+      localStorage.removeItem("isAuthenticated");
+      alert("Session expired. Redirecting to login.");
+      window.location.reload();
+      return null;
+    }
+    if (!response.ok) {
+      throw new Error("Authorization failed");
+    }
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error("Authorization failed:", error.message);
     throw new Error("Authorization failed");
   }
 };
@@ -111,23 +151,32 @@ export const getEventGoods = async (event) => {
 // Create good for an event
 export const createGood = async (event, goodName, goodPrice, payers) => {
   try {
-    const response = await api.post(
-      `/add_item_to_event/?event=${event}&item=${goodName}&price=${goodPrice}`,
-      payers,
+    const response = await fetch(
+      `${BACKEND_BASE_URL}/add_item_to_event/?event=${event}&item=${goodName}&price=${goodPrice}`,
       {
+        method: "POST",
         headers: {
           Authorization: `Bearer ${localStorage.getItem("authToken") || ""}`,
           accept: "application/json",
           "Content-Type": "application/json",
         },
+        body: JSON.stringify(payers),
       }
     );
-    return response.data;
+    if (response.status === 401) {
+      localStorage.removeItem("authToken");
+      localStorage.removeItem("isAuthenticated");
+      alert("Session expired. Redirecting to login.");
+      window.location.reload();
+      return null;
+    }
+    if (!response.ok) {
+      throw new Error("Error creating item");
+    }
+    const data = await response.json();
+    return data;
   } catch (error) {
-    console.error(
-      "Error creating item:",
-      error.response?.data || error.message
-    );
+    console.error("Error creating item:", error.message);
     throw error;
   }
 };
@@ -135,9 +184,10 @@ export const createGood = async (event, goodName, goodPrice, payers) => {
 // Delete a good from an event
 export const deleteItem = async (event, id) => {
   try {
-    const response = await api.delete(
-      `/remove_item_from_event/?event=${event}&id=${id}`,
+    const response = await fetch(
+      `${BACKEND_BASE_URL}/remove_item_from_event/?event=${event}&id=${id}`,
       {
+        method: "DELETE",
         headers: {
           Authorization: `Bearer ${localStorage.getItem("authToken") || ""}`,
           accept: "application/json",
@@ -145,12 +195,20 @@ export const deleteItem = async (event, id) => {
         },
       }
     );
-    return response.data;
+    if (response.status === 401) {
+      localStorage.removeItem("authToken");
+      localStorage.removeItem("isAuthenticated");
+      alert("Session expired. Redirecting to login.");
+      window.location.reload();
+      return null;
+    }
+    if (!response.ok) {
+      throw new Error("Error deleting item");
+    }
+    const data = await response.json();
+    return data;
   } catch (error) {
-    console.error(
-      "Error deleting item:",
-      error.response?.data || error.message
-    );
+    console.error("Error deleting item:", error.message);
     throw error;
   }
 };
@@ -164,71 +222,111 @@ export const updateItemInEvent = async (
   newPayers
 ) => {
   try {
-    const response = await api.put(`/update_item_in_event/`, newPayers, {
-      params: {
-        event: event,
-        item_id: itemId,
-        new_item: newItem,
-        new_price: newPrice,
-      },
-      headers: {
-        Authorization: `Bearer ${localStorage.getItem("authToken") || ""}`,
-        accept: "application/json",
-        "Content-Type": "application/json",
-      },
-    });
-    return response.data;
-  } catch (error) {
-    console.error(
-      "Error updating item in event:",
-      error.response?.data || error.message
+    const response = await fetch(
+      `${BACKEND_BASE_URL}/update_item_in_event/?event=${event}&item_id=${itemId}&new_item=${newItem}&new_price=${newPrice}`,
+      {
+        method: "PUT",
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("authToken") || ""}`,
+          accept: "application/json",
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(newPayers),
+      }
     );
+    if (response.status === 401) {
+      localStorage.removeItem("authToken");
+      localStorage.removeItem("isAuthenticated");
+      alert("Session expired. Redirecting to login.");
+      window.location.reload();
+      return null;
+    }
+    if (!response.ok) {
+      throw new Error("Error updating item in event");
+    }
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error("Error updating item in event:", error.message);
     throw error;
   }
 };
 
+// Upload the receipt to the backend and wait for it to get processed
 export const uploadReceiptAndProcess = async (file) => {
   try {
     const formData = new FormData();
     formData.append("file", file);
 
-    const response = await api.post("/process-receipt/", formData, {
+    const response = await fetch(`${BACKEND_BASE_URL}/process-receipt/`, {
+      method: "POST",
       headers: {
         Authorization: `Bearer ${localStorage.getItem("authToken") || ""}`,
-        "Content-Type": "multipart/form-data",
         accept: "application/json",
       },
+      body: formData,
     });
-    return response.data;
+
+    if (response.status === 401) {
+      localStorage.removeItem("authToken");
+      localStorage.removeItem("isAuthenticated");
+      alert("Session expired. Redirecting to login.");
+      window.location.reload();
+      return null;
+    }
+
+    if (!response.ok) {
+      throw new Error("Error uploading file");
+    }
+
+    const data = await response.json();
+    return data;
   } catch (error) {
-    console.error(
-      "Error uploading file:",
-      error.response?.data || error.message
-    );
+    console.error("Error uploading file:", error.message);
     throw error;
   }
 };
 
 // Create multiple goods for an event
 export const createGoods = async (event, items) => {
+  // Convert payers in each item to an array of strings
+  const mutatedItems = items.map((item) => ({
+    ...item,
+    payers: Object.keys(item.payers).map((key) => key.toString()),
+  }));
+  console.log("event: ", event);
+  console.log("items: ", mutatedItems);
   try {
-    const response = await api.post(
-      `/add_items_to_event/?event=${event}`,
-      items,
+    const response = await fetch(
+      `${BACKEND_BASE_URL}/add_items_to_event/?event=${encodeURIComponent(
+        event
+      )}`,
       {
+        method: "POST",
         headers: {
           Authorization: `Bearer ${localStorage.getItem("authToken") || ""}`,
           accept: "application/json",
           "Content-Type": "application/json",
         },
+        body: JSON.stringify(mutatedItems),
       }
     );
-    return response.data;
+    if (response.status === 401) {
+      localStorage.removeItem("authToken");
+      localStorage.removeItem("isAuthenticated");
+      alert("Session expired. Redirecting to login.");
+      window.location.reload();
+      return null;
+    }
+    if (!response.ok) {
+      const errorData = await response.json();
+      console.error("Error response:", errorData);
+      throw new Error("Error adding items to event");
+    }
+    const data = await response.json();
+    return data;
   } catch (error) {
-    console.error(
-      "Error adding items to event:",
-      error.response?.data || error.message
-    );
+    console.error("Error adding items to event:", error.message);
     throw error;
   }
 };
