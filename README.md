@@ -1,8 +1,10 @@
 ## 🎮 LAN Party Cost Management Tool
 
-A project for managing costs during a LAN party. The frontend is built with React + Vite, and the backend is powered by FastAPI + MongoDB.  
+A project for managing costs for a LAN part, utilizing the ability to parse items from a receipt. The frontend is built with React + Vite, and the backend is powered by FastAPI + MongoDB.  
 This project is intended to be run on Linux.  
 All texts in the application are in Finnish. (Just a FYI if you want to run this and the texts don't make any sense.)
+
+<img src="./readme-images/4.png" alt="LAN Party Cost Management Tool" width="600"/>
 
 ### 📂 Project Structure:
 
@@ -87,3 +89,11 @@ Backend is deployed the same way as in the backend setup. Just run the uvicorn c
 
 Frontend:
 Build the frontend in `frontend` directory by running `npm run build`. This command creates a `dist` directory. Copy the contents of the directory on a server that will be hosting the site.
+
+---
+
+### 📷 Couple more images:
+
+<img src="./readme-images/1.png" alt="LAN Party Cost Management Tool" width="600"/>
+<img src="./readme-images/2.png" alt="LAN Party Cost Management Tool" width="600"/>
+<img src="./readme-images/3.png" alt="LAN Party Cost Management Tool" width="600"/>

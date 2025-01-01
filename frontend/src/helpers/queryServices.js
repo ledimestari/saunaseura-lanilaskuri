@@ -289,13 +289,6 @@ export const uploadReceiptAndProcess = async (file) => {
 
 // Create multiple goods for an event
 export const createGoods = async (event, items) => {
-  // Convert payers in each item to an array of strings
-  const mutatedItems = items.map((item) => ({
-    ...item,
-    payers: Object.keys(item.payers).map((key) => key.toString()),
-  }));
-  console.log("event: ", event);
-  console.log("items: ", mutatedItems);
   try {
     const response = await fetch(
       `${BACKEND_BASE_URL}/add_items_to_event/?event=${encodeURIComponent(
@@ -308,7 +301,7 @@ export const createGoods = async (event, items) => {
           accept: "application/json",
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(mutatedItems),
+        body: JSON.stringify(items),
       }
     );
     if (response.status === 401) {
