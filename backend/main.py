@@ -49,7 +49,7 @@ DATABASE_NAME = "saunaseura-lanilaskuri"
 client = AsyncIOMotorClient(MONGO_URI)
 db = client[DATABASE_NAME]
 TOKENS = {} # Move token storage to db
-TOKEN_EXPIRATION = timedelta(hours=1)
+TOKEN_EXPIRATION = timedelta(hours=12)
 
 
 class EventCreateRequest(BaseModel):
@@ -67,6 +67,7 @@ class Item(BaseModel):
 def create_token():
     return secrets.token_hex(16)
 
+
 # Validate token on every api call
 def validate_token(request: Request):
     token = request.headers.get("Authorization")
@@ -81,6 +82,8 @@ def validate_token(request: Request):
         raise HTTPException(status_code=401, detail="Unauthorized: Invalid or expired token")
 
     return token
+
+
 # Health check endpoint
 @app.get("/health")
 @limiter.limit("10/minute")
@@ -140,11 +143,12 @@ async def add_item_to_event(event: str, item: str, price: float, payers: List[st
 @app.post("/add_items_to_event/")
 @limiter.limit("10/minute")
 async def add_item_to_event(
-    event: str, 
-    items: List[Item], 
-    request: Request, 
-    token: str = Depends(validate_token)
+    event: str,
+    items: List[Item],
+    request: Request, token: str = Depends(validate_token)
 ):
+    print("Event:", event)  # Log the event
+    print("Items:", items)  # Log the items
     
     collection = db["events"]
     event_document = await collection.find_one({"event_name": event})
@@ -153,7 +157,6 @@ async def add_item_to_event(
         raise HTTPException(status_code=404, detail="Event not found")
     
     for row in items:
-        
         try:
             price = float(row.price)
         except ValueError:
@@ -235,7 +238,6 @@ async def update_item_in_event(
 ):
     collection = db["events"]
     event_document = await collection.find_one({"event_name": event})
-
     if not event_document:
         raise HTTPException(status_code=404, detail="Event not found")
 
@@ -243,15 +245,12 @@ async def update_item_in_event(
     update_fields["goods.$.item"] = new_item
     update_fields["goods.$.price"] = new_price
     update_fields["goods.$.payers"] = new_payers
-
     update_result = await collection.update_one(
         {"event_name": event, "goods.id": item_id},
         {"$set": update_fields}
     )
-
     if update_result.modified_count > 0:
         return {"status": "success", "message": "Item updated successfully"}
-    
     raise HTTPException(status_code=500, detail="Failed to update item")
 
 # Handle the receipt and parse all items from it
