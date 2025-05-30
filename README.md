@@ -53,8 +53,8 @@ For the backend, authentication is handled by creating a token for each user whe
 
 7. Start and Enable MongoDB
 
-   `sudo systemctl start mongodb`  
-   `sudo systemctl enable mongodb`
+   `sudo systemctl start mongod`  
+   `sudo systemctl enable mongod`
 
 8. Run the FastAPI Server
 
